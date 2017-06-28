@@ -1,12 +1,4 @@
 #!/bin/env python
-'''
-@author     Allen Choong Chieng Hoon
-@date       2014-05-06
-@version    0.1
-
-This script is to make the CSV and SQLite data interchangeable, so that we can use the SQL operation
-and edit the CSV with spreadsheet application.
-'''
 import sys
 import csv
 import sqlite3
