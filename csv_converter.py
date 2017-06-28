@@ -1,8 +1,8 @@
 #!/bin/env python
 '''
-@author	Allen Choong Chieng Hoon
-@date	2014-05-06
-@version	0.1
+@author     Allen Choong Chieng Hoon
+@date       2014-05-06
+@version    0.1
 
 This script is to make the CSV and SQLite data interchangeable, so that we can use the SQL operation
 and edit the CSV with spreadsheet application.
@@ -164,8 +164,6 @@ def sqlite_read(filename):
 
     c.close()
     conn.close()
-    print(tables)
-
     return tables
 
 
@@ -181,9 +179,14 @@ def convert_csv_to_sqlite(input_file, output_file):
     sqlite_save(input_file, output_file, header, data)
 
 
+def convert_csv_to_json(input_file, output_file):
+    pass
+
+
 def main(argv=None):
     parser = OptionParser(usage='usage: %prog [options] input_file output_file')
-    parser.add_option('-R', '--reverse', action='store_true', dest='reverse', help='SQLite to CSV. Usage: csv2sqlite -R input_file output_folder', default=False)
+    parser.add_option('-R', '--reverse', action='store_true', dest='reverse', help='SQLite to CSV. Usage: csv_converter -R input_file output_folder', default=False)
+    parser.add_option('-J', '--json', action='store_true', dest='to_json', help='CSV to JSON. Usage: csv_converter -J input_file output_file', default=False)
     (options, args) = parser.parse_args()
     if len(args) < 2:
         parser.error('incorrect number of arguments')
@@ -192,6 +195,8 @@ def main(argv=None):
     output_file = args[1]
     if options.reverse:
         convert_sqlite_to_csv(input_file, output_file)
+    elif options.to_json:
+        convert_csv_to_json(input_file, output_file)
     else:
         convert_csv_to_sqlite(input_file, output_file)
 
