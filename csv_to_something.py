@@ -77,13 +77,22 @@ def get_table_name(filename):
     return re.compile('^(\d)|[!-\.]').sub(r'_\1', table_name)
 
 
+def column_type_to_affinity(column_type):
+    if column_type == 'float':
+        return 'NUMERIC'
+    elif column_type == 'boolean':
+        return 'INTEGER'
+    else:
+        return 'TEXT'
+
+
 def sqlite_create_table(cursor, table_name, header, column_types):
     sql = 'CREATE TABLE IF NOT EXISTS `{}` ( '.format(table_name)
     for i, v in enumerate(header):
         if i == len(header) - 1:
-            sql += '"{}" {} )'.format(v.strip(), column_types[i])
+            sql += '"{}" {} )'.format(v.strip(), column_type_to_affinity(column_types[i]))
             break
-        sql += '"{}" {}, '.format(v.strip(), column_types[i])
+        sql += '"{}" {}, '.format(v.strip(), column_type_to_affinity(column_types[i]))
 
     cursor.execute(sql)
 
@@ -114,13 +123,18 @@ def is_integer(s):
 
 def sqlite_guess_row_type(row):
     isFloat = True
+    isBoolean = True
     for item in row:
         if not is_float(item):
             isFloat = False
+        if not is_boolean(item):
+            isBoolean = False
     if isFloat:
-        return 'NUMERIC'
+        return 'float'
+    elif isBoolean:
+        return 'boolean'
     else:
-        return 'TEXT'
+        return 'string'
 
 
 def sqlite_guess_column_types(data):
@@ -131,14 +145,22 @@ def sqlite_guess_column_types(data):
     return column_types
 
 
-def sqlite_insert_into_table(cursor, table_name, header, data):
+def sqlite_convert_string_to_value(s, datatype):
+    if datatype == 'boolean':
+        return 1 if re.search(r'^([1yt]|true|yes)$', s.lower().strip()) else 0
+    return s
+
+
+def sqlite_insert_into_table(cursor, table_name, header, data, column_types):
     # Data, in SQLite, by default it only allows 500. So, we cannot add too much
     # Just a special note. `sqliteman` cannot see the column with the name with dot. But `sqlitebrowser` can open.
     sql = 'INSERT INTO `{}` VALUES ('.format(table_name)
     for j, row in enumerate(data):
         for i, v in enumerate(row):
+            value = sqlite_convert_string_to_value(v.replace('"', '""').strip(), column_types[i])
+
             if i == len(header) - 1:
-                sql += '"{}" ) '.format(v.replace('"', '""').strip())
+                sql += '"{}" ) '.format(value)
 
                 if (j + 1) % 500 == 0 and j < len(data) - 1:  # need to close then repeat
                     cursor.execute(sql)
@@ -148,7 +170,7 @@ def sqlite_insert_into_table(cursor, table_name, header, data):
                     sql += ', ('
 
                 break
-            sql += '"{}", '.format(v.replace('"', '""').strip())
+            sql += '"{}", '.format(value)
     cursor.execute(sql)
 
 
@@ -159,7 +181,7 @@ def sqlite_save(input_file, output_file, header, data):
     column_types = sqlite_guess_column_types(data)
 
     sqlite_create_table(c, table_name, header, column_types)
-    sqlite_insert_into_table(c, table_name, header, data)
+    sqlite_insert_into_table(c, table_name, header, data, column_types)
     conn.commit()
     c.close()
     conn.close()
