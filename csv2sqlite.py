@@ -68,15 +68,15 @@ def get_table_name(filename):
     return re.compile('^(\d)|[-\.]').sub(r'_\1', table_name)
 
 
-def sqlite_create_table(conn, table_name, header, column_types):
+def sqlite_create_table(cursor, table_name, header, column_types):
     sql = 'CREATE TABLE IF NOT EXISTS `{}` ( '.format(table_name)
     for i, v in enumerate(header):
         if i == len(header) - 1:
-            sql += '"{}" TEXT )'.format(v.strip())
+            sql += '"{}" {} )'.format(v.strip(), column_types[i])
             break
-        sql += '"{}" TEXT, '.format(v.strip())
+        sql += '"{}" {}, '.format(v.strip(), column_types[i])
 
-    conn.execute(sql)
+    cursor.execute(sql)
 
 
 def transpose_matrix(m):
@@ -114,33 +114,34 @@ def guess_column_types(data):
     return column_types
 
 
-def sqlite_save(filename, header, data):
-    conn = sqlite3.connect(filename)
-    c = conn.cursor()
-    table_name = get_table_name(filename)
-    column_types = guess_column_types(data)
-    print(column_types)
-
-    sqlite_create_table(c, table_name, header, column_types)
-
+def sqlite_insert_into_table(cursor, table_name, header, data):
     # Data, in SQLite, by default it only allows 500. So, we cannot add too much
-    sql = 'insert into `%s` values (' % table_name
+    sql = 'INSERT INTO `{}` VALUES ('.format(table_name)
     for j, row in enumerate(data):
         for i, v in enumerate(row):
             if i == len(header) - 1:
-                sql += '"%s" ) ' % v.replace('"', '""').strip()
+                sql += '"{}" ) '.format(v.replace('"', '""').strip())
 
                 if (j + 1) % 500 == 0 and j < len(data) - 1:  # need to close then repeat
-                    c.execute(sql)
-                    sql = 'insert into `%s` values (' % table_name
+                    cursor.execute(sql)
+                    sql = 'INSERT INTO `{}` VALUES ('.format(table_name)
 
                 elif j < len(data) - 1:
                     sql += ', ('
 
                 break
-            sql += '"%s", ' % v.replace('"', '""').strip()
+            sql += '"{}", '.format(v.replace('"', '""').strip())
+    cursor.execute(sql)
 
-    c.execute(sql)
+
+def sqlite_save(filename, header, data):
+    conn = sqlite3.connect(filename)
+    c = conn.cursor()
+    table_name = get_table_name(filename)
+    column_types = guess_column_types(data)
+
+    sqlite_create_table(c, table_name, header, column_types)
+    sqlite_insert_into_table(c, table_name, header, data)
     conn.commit()
     c.close()
     conn.close()
