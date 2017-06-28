@@ -40,10 +40,7 @@ def csv_save(filename, data):
     for row in data:
         row2 = []
         for x in row:
-            if type(x) is str:
-                row2.append(x)
-            else:
-                row2.append(x.decode())
+            row2.append(x)
         writer.writerow(row2)
 
     f.close()
@@ -65,7 +62,7 @@ def get_root_name(filename):
 
 def get_table_name(filename):
     table_name = get_root_name(filename)
-    return re.compile('^(\d)|[-\.]').sub(r'_\1', table_name)
+    return re.compile('^(\d)|[!-\.]').sub(r'_\1', table_name)
 
 
 def sqlite_create_table(cursor, table_name, header, column_types):
@@ -116,6 +113,7 @@ def guess_column_types(data):
 
 def sqlite_insert_into_table(cursor, table_name, header, data):
     # Data, in SQLite, by default it only allows 500. So, we cannot add too much
+    # Just a special note. `sqliteman` cannot see the column with the name with dot. But `sqlitebrowser` can open.
     sql = 'INSERT INTO `{}` VALUES ('.format(table_name)
     for j, row in enumerate(data):
         for i, v in enumerate(row):
@@ -134,10 +132,10 @@ def sqlite_insert_into_table(cursor, table_name, header, data):
     cursor.execute(sql)
 
 
-def sqlite_save(filename, header, data):
-    conn = sqlite3.connect(filename)
+def sqlite_save(input_file, output_file, header, data):
+    conn = sqlite3.connect(output_file)
     c = conn.cursor()
-    table_name = get_table_name(filename)
+    table_name = get_table_name(input_file)
     column_types = guess_column_types(data)
 
     sqlite_create_table(c, table_name, header, column_types)
@@ -180,7 +178,7 @@ def convert_sqlite_to_csv(sqliteFile, output_dir):
 
 def convert_csv_to_sqlite(input_file, output_file):
     header, data = csv_read(input_file)
-    sqlite_save(output_file, header, data)
+    sqlite_save(input_file, output_file, header, data)
 
 
 def main(argv=None):
