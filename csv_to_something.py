@@ -267,13 +267,32 @@ def json_save(output_file, header, data):
         f.write('\n')
 
 
+def get_all_keys(dicts):
+    keys = []
+    for row in dicts:
+        keys += list(row.keys())
+    return list(set(keys))
+
+
+def unify_dicts(dicts):
+    keys = get_all_keys(dicts)
+    for i, d in enumerate(dicts):
+        for k in keys:
+            if k not in d:
+                dicts[i][k] = None
+
+
 def convert_dicts_to_list(dicts):
+    unify_dicts(dicts)
     if len(dicts) == 0:
         return []
     header = list(dicts[0].keys())
     l = [header]
     for d in dicts:
-        l.append(list(d.values()))
+        line = []
+        for k in header:
+            line.append(d[k])
+        l.append(line)
     return l
 
 
