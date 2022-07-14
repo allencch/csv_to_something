@@ -82,9 +82,11 @@ def sqlite_create_table(cursor, table_name, header, column_types):
     sql = 'CREATE TABLE IF NOT EXISTS `{}` ( '.format(table_name)
     for i, v in enumerate(header):
         if i == len(header) - 1:
-            sql += '"{}" {} )'.format(v.strip(), column_type_to_affinity(column_types[i]))
+            sql += '"{}" {} )'.format(v.strip(),
+                                      column_type_to_affinity(column_types[i]))
             break
-        sql += '"{}" {}, '.format(v.strip(), column_type_to_affinity(column_types[i]))
+        sql += '"{}" {}, '.format(v.strip(),
+                                  column_type_to_affinity(column_types[i]))
 
     cursor.execute(sql)
 
@@ -149,7 +151,8 @@ def sqlite_insert_into_table(cursor, table_name, header, data, column_types):
     sql = 'INSERT INTO `{}` VALUES ('.format(table_name)
     for j, row in enumerate(data):
         for i, v in enumerate(row):
-            value = sqlite_convert_string_to_value(v.replace('"', '""').strip(), column_types[i])
+            value = sqlite_convert_string_to_value(
+                v.replace('"', '""').strip(), column_types[i])
 
             if i == len(header) - 1:
                 sql += '"{}" ) '.format(value)
@@ -325,26 +328,31 @@ def convert_json_to_csv(input_file, output_file):
 
 
 def main(argv=None):
-    parser = OptionParser(usage='usage: %prog [options] input_file output_file. Default option is CSV to SQLite.')
+    parser = OptionParser(
+        usage='usage: %prog [options] input_file output_file. Default option is CSV to SQLite.')
     parser.add_option('--c2s',
                       action='store_true',
                       dest='csv_to_sqlite',
-                      help='CSV to SQLite [default]. Usage: {} --c2s input_file output_file'.format(PROGNAME),
+                      help='CSV to SQLite [default]. Usage: {} --c2s input_file output_file'.format(
+                          PROGNAME),
                       default=False)
     parser.add_option('--s2c',
                       action='store_true',
                       dest='sqlite_to_csv',
-                      help='SQLite to CSV. Usage: {} --s2c input_file output_folder'.format(PROGNAME),
+                      help='SQLite to CSV. Usage: {} --s2c input_file output_folder'.format(
+                          PROGNAME),
                       default=False)
     parser.add_option('--c2j',
                       action='store_true',
                       dest='csv_to_json',
-                      help='CSV to JSON. Usage: {} --c2j input_file output_file'.format(PROGNAME),
+                      help='CSV to JSON. Usage: {} --c2j input_file output_file'.format(
+                          PROGNAME),
                       default=False)
     parser.add_option('--j2c',
                       action='store_true',
                       dest='json_to_csv',
-                      help='JSON to CSV. Usage: {} --j2c input_file output_file'.format(PROGNAME),
+                      help='JSON to CSV. Usage: {} --j2c input_file output_file'.format(
+                          PROGNAME),
                       default=False)
     (options, args) = parser.parse_args()
     if len(args) < 2:
