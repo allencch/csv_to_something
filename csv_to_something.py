@@ -66,7 +66,7 @@ def get_root_name(filename):
 
 def get_table_name(filename):
     table_name = get_root_name(filename)
-    return re.compile('^(\d)|[!-\.]').sub(r'_\1', table_name)
+    return re.compile(r'^(\d)|[!-\.]').sub(r'_\1', table_name)
 
 
 def column_type_to_affinity(column_type):
@@ -103,7 +103,7 @@ def is_float(s):
     try:
         float(s)
         return True
-    except:
+    except Exception:
         return False
 
 
@@ -111,7 +111,7 @@ def is_integer(s):
     try:
         int(s)
         return True
-    except:
+    except Exception:
         return False
 
 
@@ -253,20 +253,20 @@ def json_guess_column_types(data):
 
 
 def convert_to_list(header, data, column_types):
-    l = []
+    array = []
     for row in data:
         d = {}
         for i, elem in enumerate(row):
             d[header[i]] = json_convert_string_to_value(elem, column_types[i])
-        l.append(d)
-    return l
+        array.append(d)
+    return array
 
 
 def json_save(output_file, header, data):
     column_types = json_guess_column_types(data)
-    l = convert_to_list(header, data, column_types)
+    array = convert_to_list(header, data, column_types)
     with open(output_file, 'w') as f:
-        json.dump(l, f, indent="  ")
+        json.dump(array, f, indent="  ")
         f.write('\n')
 
 
@@ -290,13 +290,13 @@ def convert_dicts_to_list(dicts):
     if len(dicts) == 0:
         return []
     header = list(dicts[0].keys())
-    l = [header]
+    row = [header]
     for d in dicts:
         line = []
         for k in header:
             line.append(d[k])
-        l.append(line)
-    return l
+        row.append(line)
+    return row
 
 
 ##################
@@ -323,8 +323,8 @@ def convert_csv_to_json(input_file, output_file):
 def convert_json_to_csv(input_file, output_file):
     with open(input_file, 'r') as f:
         dicts = json.load(f)
-        l = convert_dicts_to_list(dicts)
-        csv_save(output_file, l)
+        array = convert_dicts_to_list(dicts)
+        csv_save(output_file, array)
 
 
 def main(argv=None):
