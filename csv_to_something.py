@@ -1,10 +1,13 @@
 #!/bin/env python
+
+"""Module provides function to convert CSV, JSON and SQLite"""
+
 import sys
 import csv
 import sqlite3
 import os.path
 import re
-from optparse import OptionParser
+from argparse import ArgumentParser
 import json
 
 
@@ -327,47 +330,50 @@ def convert_json_to_csv(input_file, output_file):
         csv_save(output_file, array)
 
 
-def main(argv=None):
-    parser = OptionParser(
-        usage='usage: %prog [options] input_file output_file. Default option is CSV to SQLite.')
-    parser.add_option('--c2s',
-                      action='store_true',
-                      dest='csv_to_sqlite',
-                      help='CSV to SQLite [default]. Usage: {} --c2s input_file output_file'.format(
-                          PROGNAME),
-                      default=False)
-    parser.add_option('--s2c',
-                      action='store_true',
-                      dest='sqlite_to_csv',
-                      help='SQLite to CSV. Usage: {} --s2c input_file output_folder'.format(
-                          PROGNAME),
-                      default=False)
-    parser.add_option('--c2j',
-                      action='store_true',
-                      dest='csv_to_json',
-                      help='CSV to JSON. Usage: {} --c2j input_file output_file'.format(
-                          PROGNAME),
-                      default=False)
-    parser.add_option('--j2c',
-                      action='store_true',
-                      dest='json_to_csv',
-                      help='JSON to CSV. Usage: {} --j2c input_file output_file'.format(
-                          PROGNAME),
-                      default=False)
-    (options, args) = parser.parse_args()
-    if len(args) < 2:
-        parser.error('incorrect number of arguments')
+def main(argv):
+    parser = ArgumentParser(
+        prog="PROG",
+        usage='%(prog)s [options] input_file output_file. Default option is CSV to SQLite.')
+    parser.add_argument('--c2s',
+                        action='store_true',
+                        dest='csv_to_sqlite',
+                        help=f'CSV to SQLite [default]. Usage: {PROGNAME} --c2s input_file output_file',
+                        default=False)
+    parser.add_argument('--s2c',
+                        action='store_true',
+                        dest='sqlite_to_csv',
+                        help=f'SQLite to CSV. Usage: {PROGNAME} --s2c input_file output_folder',
+                        default=False)
+    parser.add_argument('--c2j',
+                        action='store_true',
+                        dest='csv_to_json',
+                        help=f'CSV to JSON. Usage: {PROGNAME} --c2j input_file output_file',
+                        default=False)
+    parser.add_argument('--j2c',
+                        action='store_true',
+                        dest='json_to_csv',
+                        help=f'JSON to CSV. Usage: {PROGNAME} --j2c input_file output_file',
+                        default=False)
+    parser.add_argument("input_file")
+    parser.add_argument("output_file")
 
-    input_file = args[0]
-    output_file = args[1]
-    if options.sqlite_to_csv:
+    if len(argv) < 2:
+        parser.print_usage()
+        sys.exit(1)
+
+    args = parser.parse_args()
+
+    input_file = args.input_file
+    output_file = args.output_file
+    if args.sqlite_to_csv:
         convert_sqlite_to_csv(input_file, output_file)
-    elif options.csv_to_json:
+    elif args.csv_to_json:
         convert_csv_to_json(input_file, output_file)
-    elif options.json_to_csv:
+    elif args.json_to_csv:
         convert_json_to_csv(input_file, output_file)
     else:
         convert_csv_to_sqlite(input_file, output_file)
 
 
-main(sys.argv)
+if __name__ == "__main__":
+    main(sys.argv)
