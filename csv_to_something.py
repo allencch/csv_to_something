@@ -74,21 +74,18 @@ def get_table_name(filename):
 def column_type_to_affinity(column_type):
     if column_type == 'float':
         return 'NUMERIC'
-    elif column_type == 'boolean':
+    if column_type == 'boolean':
         return 'INTEGER'
-    else:
-        return 'TEXT'
+    return 'TEXT'
 
 
 def sqlite_create_table(cursor, table_name, header, column_types):
-    sql = 'CREATE TABLE IF NOT EXISTS `{}` ( '.format(table_name)
+    sql = f'CREATE TABLE IF NOT EXISTS `{table_name}` ( '
     for i, v in enumerate(header):
         if i == len(header) - 1:
-            sql += '"{}" {} )'.format(v.strip(),
-                                      column_type_to_affinity(column_types[i]))
+            sql += f'"{v.strip()}" {column_type_to_affinity(column_types[i])} )'
             break
-        sql += '"{}" {}, '.format(v.strip(),
-                                  column_type_to_affinity(column_types[i]))
+        sql += f'"{v.strip()}" {column_type_to_affinity(column_types[i])}, '
 
     cursor.execute(sql)
 
@@ -105,32 +102,35 @@ def is_float(s):
     try:
         float(s)
         return True
+    # pylint: disable=broad-exception-caught
     except Exception:
         return False
+    # pylint: enable=broad-exception-caught
 
 
 def is_integer(s):
     try:
         int(s)
         return True
+    # pylint: disable=broad-exception-caught
     except Exception:
         return False
+    # pylint: enable=broad-exception-caught
 
 
 def sqlite_guess_row_type(row):
-    isFloat = True
-    isBoolean = True
+    is_it_float = True
+    is_it_boolean = True
     for item in row:
         if not is_float(item):
-            isFloat = False
+            is_it_float = False
         if not is_boolean(item):
-            isBoolean = False
-    if isFloat:
+            is_it_boolean = False
+    if is_it_float:
         return 'float'
-    elif isBoolean:
+    if is_it_boolean:
         return 'boolean'
-    else:
-        return 'string'
+    return 'string'
 
 
 def sqlite_guess_column_types(data):
@@ -150,24 +150,24 @@ def sqlite_convert_string_to_value(s, datatype):
 def sqlite_insert_into_table(cursor, table_name, header, data, column_types):
     # Data, in SQLite, by default it only allows 500. So, we cannot add too much
     # Just a special note. `sqliteman` cannot see the column with the name with dot. But `sqlitebrowser` can open.
-    sql = 'INSERT INTO `{}` VALUES ('.format(table_name)
+    sql = f'INSERT INTO `{table_name}` VALUES ('
     for j, row in enumerate(data):
         for i, v in enumerate(row):
             value = sqlite_convert_string_to_value(
                 v.replace('"', '""').strip(), column_types[i])
 
             if i == len(header) - 1:
-                sql += '"{}" ) '.format(value)
+                sql += f'"{value}" ) '
 
                 if (j + 1) % 500 == 0 and j < len(data) - 1:  # need to close then repeat
                     cursor.execute(sql)
-                    sql = 'INSERT INTO `{}` VALUES ('.format(table_name)
+                    sql = f'INSERT INTO `{table_name}` VALUES ('
 
                 elif j < len(data) - 1:
                     sql += ', ('
 
                 break
-            sql += '"{}", '.format(value)
+            sql += f'"{value}", '
     cursor.execute(sql)
 
 
@@ -193,8 +193,8 @@ def sqlite_read(filename):
     for row in c.execute("select name from sqlite_master where type='table'"):
         tables[row[0]] = []
 
-    for k, v in list(tables.items()):
-        for row in c.execute("select * from `%s`" % k):
+    for k, _v in list(tables.items()):
+        for row in c.execute(f"select * from `{k}`"):
             tables[k].append(row)
         headers = []
         for h in c.description:
@@ -215,35 +215,33 @@ def is_boolean(s):
 
 
 def json_guess_row_type(row):
-    isFloat = True
-    isBoolean = True
-    isInteger = True
+    is_it_float = True
+    is_it_boolean = True
+    is_it_integer = True
     for item in row:
         if not is_float(item):
-            isFloat = False
+            is_it_float = False
         if not is_integer(item):
-            isInteger = False
+            is_it_integer = False
         if not is_boolean(item):
-            isBoolean = False
-    if isFloat and not isInteger:
+            is_it_boolean = False
+    if is_it_float and not is_it_integer:
         return 'float'
-    elif isInteger:
+    if is_it_integer:
         return 'integer'
-    elif isBoolean:
+    if is_it_boolean:
         return 'boolean'
-    else:
-        return 'string'
+    return 'string'
 
 
 def json_convert_string_to_value(s, datatype):
     if datatype == 'boolean':
-        return True if re.search(r'^([1yt]|true|yes)$', s.lower().strip()) else False
-    elif datatype == 'float':
+        return re.search(r'^([1yt]|true|yes)$', s.lower().strip())
+    if datatype == 'float':
         return float(s)
-    elif datatype == 'integer':
+    if datatype == 'integer':
         return int(s)
-    else:
-        return str(s)
+    return str(s)
 
 
 def json_guess_column_types(data):
@@ -306,8 +304,8 @@ def convert_dicts_to_list(dicts):
 ##################
 
 
-def convert_sqlite_to_csv(sqliteFile, output_dir):
-    data = sqlite_read(sqliteFile)
+def convert_sqlite_to_csv(sqlite_file, output_dir):
+    data = sqlite_read(sqlite_file)
     os.makedirs(output_dir, exist_ok=True)
     csv_save_all(output_dir, data)
 
