@@ -20,32 +20,31 @@ PROGNAME = 'csv_to_something'
 
 
 def csv_read(filename):
-    f = open(filename, 'r')
+    with open(filename, 'r', encoding="utf-8") as f:
+        reader = csv.reader(f, delimiter=',', quotechar='"')
+        header = None
+        data = []
+        for i, row in enumerate(reader):
+            if i == 0:
+                header = row
+                continue
+            data.append(row)
 
-    reader = csv.reader(f, delimiter=',', quotechar='"')
-    header = None
-    data = []
-    for i, row in enumerate(reader):
-        if i == 0:
-            header = row
-            continue
-        data.append(row)
-
-    f.close()
+        f.close()
 
     return header, data
 
 
 def csv_save(filename, data):
-    f = open(filename, 'w')
-    writer = csv.writer(f, delimiter=',', quotechar='"')
-    for row in data:
-        row2 = []
-        for x in row:
-            row2.append(x)
-        writer.writerow(row2)
+    with open(filename, 'w', encoding="utf-8") as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        for row in data:
+            row2 = []
+            for x in row:
+                row2.append(x)
+            writer.writerow(row2)
 
-    f.close()
+        f.close()
 
 
 def csv_save_all(output_dir, data):
@@ -268,7 +267,7 @@ def convert_to_list(header, data, column_types):
 def json_save(output_file, header, data):
     column_types = json_guess_column_types(data)
     array = convert_to_list(header, data, column_types)
-    with open(output_file, 'w') as f:
+    with open(output_file, 'w', encoding="utf-8") as f:
         json.dump(array, f, indent="  ")
         f.write('\n')
 
@@ -324,7 +323,7 @@ def convert_csv_to_json(input_file, output_file):
 
 
 def convert_json_to_csv(input_file, output_file):
-    with open(input_file, 'r') as f:
+    with open(input_file, 'r', encoding="utf-8") as f:
         dicts = json.load(f)
         array = convert_dicts_to_list(dicts)
         csv_save(output_file, array)
